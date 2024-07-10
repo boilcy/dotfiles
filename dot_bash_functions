@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Create a new directory and enter it
 md() {
 	echo "Usage: md <directory_name>"
@@ -15,7 +16,7 @@ f() {
 # cd into whatever is the forefront Finder window
 cdf() {
 	echo "Usage: cdf"
-	cd "`osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)'`"
+	cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')" || exit
 }
 
 # Use `which` along with symlink resolving

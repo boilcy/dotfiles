@@ -32,6 +32,8 @@ function proxy -d "Set network proxy"
 
       git config --global --unset http.proxy
       git config --global --unset https.proxy
+
+      test_proxy
     case test
       test_proxy
     case '*'
