@@ -182,9 +182,13 @@ conda() {
 
 # Function to manage proxy settings
 proxy() {
-	echo "Usage: proxy <set|unset|test> [port]"
-	local hostip=$(ip route show | grep -i default | awk '{ print $3}')
-	local localip=$(hostname -I | awk '{print $1}')
+	if [ $# -eq 0 ]; then
+        echo "Usage: proxy <set|unset|test> [port]"
+        return 1
+    fi
+	local hostip localip
+	hostip=$(ip route show | grep -i default | awk '{ print $3}')
+	localip=$(hostname -I | awk '{print $1}')
 	local default_port=4780
 	local port=${2:-$default_port}
 	local PROXY_HTTP="http://${hostip}:${port}"
@@ -196,6 +200,8 @@ proxy() {
 		export HTTPS_PROXY="${PROXY_HTTP}"
 		git config --global http.proxy "${PROXY_HTTP}"
 		git config --global https.proxy "${PROXY_HTTP}"
+
+		test_setting
 	}
 
 	unset_proxy() {
@@ -205,6 +211,8 @@ proxy() {
 		unset HTTPS_PROXY
 		git config --global --unset http.proxy
 		git config --global --unset https.proxy
+
+		test_setting
 	}
 
 	test_setting() {

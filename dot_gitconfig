@@ -9,9 +9,9 @@
 	undocommit = reset HEAD~
 [core]
 	excludesfile = ~/.gitignore
-[http]
-	proxy = http://:4780
-[https]
-	proxy = http://:4780
 [init]
 	defaultBranch = main
+[http]
+	proxy = http://172.18.224.1:4780
+[https]
+	proxy = http://172.18.224.1:4780

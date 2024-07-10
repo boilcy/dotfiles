@@ -7,6 +7,10 @@ for file in ~/.bash_{extra,prompt,exports,aliases,functions}; do
 done
 unset file
 
+# Use bash-completion, if available
+[[ $PS1 && -f /usr/share/bash-completion/bash_completion ]] && \
+    . /usr/share/bash-completion/bash_completion
+
 # to help sublimelinter etc with finding my PATHS
 case $- in
    *i*) source ~/.bash_extra
