@@ -1,11 +1,10 @@
-# Easier navigation: .., ..., ~ and -
-#alias ..="cd .."
-#alias cd..="cd .."
-#alias ...="cd ../.."
-#alias ....="cd ../../.."
-#alias .....="cd ../../../.."
-#alias ~="cd ~" # `cd` is probably faster to type though
-#alias -- -="cd -"
+#!/bin/bash
+
+# some more ls aliases
+alias ls='ls --color=auto'
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
 
 # mv, rm, cp
 alias mv='mv -v'
