@@ -4,16 +4,12 @@
 # also a .paths file seems like a great idea. https://github.com/davidaurelio/dotfiles/blob/ce3d4117762f15ed92287e1049efefadfefb557a/.profile#L16-L22
 
 # Grab my $PATHs from ~/.extra
-set -l PATH_DIRS (cat "$HOME/.extra" | grep "^PATH" | \
+set -l PATH_DIRS (cat "$HOME/.bash_extra" | grep "^PATH" | \
     # clean up bash PATH setting pattern
     sed "s/PATH=//" | sed "s/\\\$PATH://" | \
     # rewrite ~/ to use {$HOME}
     sed "s/~\//{\$HOME}\//")
-
-
 set -l PA $PATH
-
-
 
 for entry in (string split \n $PATH_DIRS)
     # resolve the {$HOME} substitutions
