@@ -36,6 +36,14 @@ alias wget="curl -O"
 # Recursively delete `.DS_Store` files
 alias cleanup_dsstore="find . -name '*.DS_Store' -type f -ls -delete"
 
+function gateway_ip
+  ip route show | grep -i default | awk '{print $3}'
+end
+
+function local_ip
+  hostname -I | awk '{print $1}'
+end
+
 # pretty sure watchexec has just won my heart after years of using `entr`
 # alias reportwatch 'watchexec "node build/build-report-components.js && node build/build-report.js --psi && node build/build-sample-reports.js && echo \$(date) && yarn eslint --fix report/renderer/components.js" && bash core/scripts/copy-util-commonjs.sh'
 

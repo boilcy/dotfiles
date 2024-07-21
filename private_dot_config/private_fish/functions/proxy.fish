@@ -1,52 +1,59 @@
-#!/usr/bin/env fish
+function proxy
+    switch $argv[1]
+        case 'on'
+            if set -q argv[2]
+                # Set system proxy
+                set -gx HTTP_PROXY "http://$argv[2]:$argv[3]"
+                set -gx HTTPS_PROXY "https://$argv[2]:$argv[3]"
+                echo "System Proxy enabled: $argv[2]:$argv[3]"
+                
+                # Set Git proxy
+                git config --global http.proxy "http://$argv[2]:$argv[3]"
+                git config --global https.proxy "https://$argv[2]:$argv[3]"
+                echo "Git Proxy enabled: $argv[2]:$argv[3]"
+            else
+                echo "Usage: proxy on <host_ip> <port>"
+            end
 
-function proxy -d "Set network proxy"
-  set -l hostip (ip route show | grep -i default | awk '{ print $3}')
-  set -l localip (hostname -I | awk '{print $1}')
-  if test -z "$argv[2]"
-      set port 4780
-  else
-      set port $argv[2]
-  end
+        case 'off'
+            # Unset system proxy
+            set -e HTTP_PROXY
+            set -e HTTPS_PROXY
+            echo "System Proxy disabled"
+            
+            # Unset Git proxy
+            git config --global --unset http.proxy
+            git config --global --unset https.proxy
+            echo "Git Proxy disabled"
 
-  set -l PROXY_HTTP "http://$hostip:$port"
+        case 'status'
+            # System proxy status
+            if set -q HTTP_PROXY
+                echo "HTTP System Proxy is set to $HTTP_PROXY"
+            else
+                echo "HTTP System Proxy is not set"
+            end
+            if set -q HTTPS_PROXY
+                echo "HTTPS System Proxy is set to $HTTPS_PROXY"
+            else
+                echo "HTTPS System Proxy is not set"
+            end
+            
+            # Git proxy status
+            set -l git_http_proxy (git config --global http.proxy)
+            set -l git_https_proxy (git config --global https.proxy)
+            if test -n "$git_http_proxy"
+                echo "Git HTTP Proxy is set to $git_http_proxy"
+            else
+                echo "Git HTTP Proxy is not set"
+            end
+            if test -n "$git_https_proxy"
+                echo "Git HTTPS Proxy is set to $git_https_proxy"
+            else
+                echo "Git HTTPS Proxy is not set"
+            end
 
-  switch "$argv[1]"
-    case set
-      set -xg http_proxy $PROXY_HTTP
-      set -xg HTTP_PROXY $PROXY_HTTP
-  
-      set -xg https_proxy $PROXY_HTTP
-      set -xg HTTPS_proxy $PROXY_HTTP
-  
-      git config --global http.proxy $PROXY_HTTP
-      git config --global https.proxy $PROXY_HTTP
-
-      test_proxy
-    case unset
-      set -e http_proxy
-      set -e HTTP_PROXY
-
-      set -e https_proxy
-      set -e HTTPS_PROXY
-
-      git config --global --unset http.proxy
-      git config --global --unset https.proxy
-
-      test_proxy
-    case test
-      test_proxy
-    case '*'
-        echo "Unsupported arguments."
-  end
-
-end
-
-function test_proxy
-  set -l hostip (ip route show | grep -i default | awk '{ print $3}')
-  set -l localip (hostname -I | awk '{print $1}')
-
-  echo "Host ip: . . . . . . ." $hostip
-  echo "Local ip:. . . . . . ." $localip
-  echo "Current proxy: . . . ." $https_proxy
+        case '*'
+            echo "Usage: proxy on|off|status [host_ip] [port]"
+    end
 end
