@@ -4,12 +4,12 @@ function proxy
             if set -q argv[2]
                 # Set system proxy
                 set -gx HTTP_PROXY "http://$argv[2]:$argv[3]"
-                set -gx HTTPS_PROXY "https://$argv[2]:$argv[3]"
+                set -gx HTTPS_PROXY "http://$argv[2]:$argv[3]"
                 echo "System Proxy enabled: $argv[2]:$argv[3]"
                 
                 # Set Git proxy
                 git config --global http.proxy "http://$argv[2]:$argv[3]"
-                git config --global https.proxy "https://$argv[2]:$argv[3]"
+                git config --global https.proxy "http://$argv[2]:$argv[3]"
                 echo "Git Proxy enabled: $argv[2]:$argv[3]"
             else
                 echo "Usage: proxy on <host_ip> <port>"

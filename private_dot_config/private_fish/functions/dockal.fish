@@ -7,7 +7,7 @@ function dockal -d "Private docker registry tag and push"
         echo "  info         Display private docker registry information"
         echo "  push         Download an image from local registry & tag & untag origin"
         echo "  pull         Tag & upload an image to a registry & untag"
-        echo "  setrepo      Set private docker registry & add to insecure registry"
+        echo "  setrepo      Set private docker registry(ip and port) & add to insecure registry"
         return 1
     end
 
@@ -59,9 +59,4 @@ function dockal -d "Private docker registry tag and push"
         case '*'
             echo "Unsupported arguments."
     end
-
-    # 获取传入的镜像名称和标签
-    #set IMAGE_TAG $argv[1]
-    #set IMAGE_NAME (echo $IMAGE_TAG | cut -d':' -f1)
-    #set TAG (echo $IMAGE_TAG | cut -d':' -f2)
 end

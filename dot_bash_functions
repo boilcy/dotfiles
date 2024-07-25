@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Create a new directory and enter it
 md() {
 	echo "Usage: md <directory_name>"
@@ -30,8 +29,8 @@ log() {
 	echo "Usage: log"
 	git log --graph --color=always \
 		--format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
-	fzf --ansi --no-sort --reverse --tiebreak=index --toggle-sort=\` \
-		--bind "ctrl-m:execute:
+		fzf --ansi --no-sort --reverse --tiebreak=index --toggle-sort=\` \
+			--bind "ctrl-m:execute:
 			echo '{}' | grep -o '[a-f0-9]\{7\}' | head -1 |
 			xargs -I % sh -c 'git show --color=always % | less -R'"
 }
@@ -39,7 +38,9 @@ log() {
 # Make two beeps
 beep() {
 	echo "Usage: beep"
-	echo -e '\a'; sleep 0.1; echo -e '\a';
+	echo -e '\a'
+	sleep 0.1
+	echo -e '\a'
 }
 
 # Start an HTTP server from a directory, optionally specifying the port
@@ -69,7 +70,7 @@ gz() {
 whois() {
 	echo "Usage: whois <domain_or_url>"
 	local domain=$(echo "$1" | awk -F/ '{print $3}') # get domain from URL
-	if [ -z $domain ] ; then
+	if [ -z $domain ]; then
 		domain=$1
 	fi
 	echo "Getting whois record for: $domain …"
@@ -85,38 +86,41 @@ csvpreview() {
 # Extract archives
 extract() {
 	echo "Usage: extract <file>"
-	if [ -f "$1" ] ; then
-		local filename=$(basename "$1")
-		local foldername="${filename%%.*}"
-		local fullpath=`perl -e 'use Cwd "abs_path";print abs_path(shift)' "$1"`
-		local didfolderexist=false
-		if [ -d "$foldername" ]; then
-			didfolderexist=true
-			read -p "$foldername already exists, do you want to overwrite it? (y/n) " -n 1
-			echo
-			if [[ $REPLY =~ ^[Nn]$ ]]; then
-				return
-			fi
-		fi
-		mkdir -p "$foldername" && cd "$foldername"
-		case $1 in
-			*.tar.bz2) tar xjf "$fullpath" ;;
-			*.tar.gz) tar xzf "$fullpath" ;;
-			*.tar.xz) tar Jxvf "$fullpath" ;;
-			*.tar.Z) tar xzf "$fullpath" ;;
-			*.tar) tar xf "$fullpath" ;;
-			*.taz) tar xzf "$fullpath" ;;
-			*.tb2) tar xjf "$fullpath" ;;
-			*.tbz) tar xjf "$fullpath" ;;
-			*.tbz2) tar xjf "$fullpath" ;;
-			*.tgz) tar xzf "$fullpath" ;;
-			*.txz) tar Jxvf "$fullpath" ;;
-			*.zip) unzip "$fullpath" ;;
-			*) echo "'$1' cannot be extracted via extract()" && cd .. && ! $didfolderexist && rm -r "$foldername" ;;
-		esac
-	else
+	if [ ! -f "$1" ]; then
 		echo "'$1' is not a valid file"
+		return 1
 	fi
+
+	local filename=$(basename "$1")
+	local foldername="${filename%%.*}"
+	local fullpath=$(perl -e 'use Cwd "abs_path";print abs_path(shift)' "$1")
+	local didfolderexist=false
+
+	if [ -d "$foldername" ]; then
+		didfolderexist=true
+		read -p "$foldername already exists, do you want to overwrite it? (y/n) " -n 1
+		echo
+		if [[ $REPLY =~ ^[Nn]$ ]]; then
+			return 1
+		fi
+	fi
+
+	mkdir -p "$foldername" && cd "$foldername" || exit
+	case $1 in
+	*.tar.bz2 | *.tb2 | *.tbz | *.tbz2) tar xjf "$fullpath" ;;
+	*.tar.gz | *.tgz | *.tar.Z | *.taz) tar xzf "$fullpath" ;;
+	*.tar.xz | *.txz) tar Jxvf "$fullpath" ;;
+	*.tar) tar xf "$fullpath" ;;
+	*.zip) unzip "$fullpath" ;;
+	*)
+		echo "'$1' cannot be extracted via extract()"
+		cd ..
+		if [ "$didfolderexist" = false ]; then
+			rm -r "$foldername"
+		fi
+		return 1
+		;;
+	esac
 }
 
 # Check who is using the laptop's iSight camera
@@ -133,10 +137,10 @@ gifify() {
 	if [[ -n "$1" ]]; then
 		if [[ $2 == '--good' ]]; then
 			ffmpeg -i "$1" -r 10 -vcodec png out-static-%05d.png
-			time convert -verbose +dither -layers Optimize -resize 900x900\> out-static*.png  GIF:- | gifsicle --colors 128 --delay=5 --loop --optimize=3 --multifile - > "$1.gif"
+			time convert -verbose +dither -layers Optimize -resize 900x900\> out-static*.png GIF:- | gifsicle --colors 128 --delay=5 --loop --optimize=3 --multifile - >"$1.gif"
 			rm -f out-static*.png
 		else
-			ffmpeg -i "$1" -s 600x400 -pix_fmt rgb24 -r 10 -f gif - | gifsicle --optimize=3 --delay=3 > "$1.gif"
+			ffmpeg -i "$1" -s 600x400 -pix_fmt rgb24 -r 10 -f gif - | gifsicle --optimize=3 --delay=3 >"$1.gif"
 		fi
 	else
 		echo "Proper usage: gifify <input_movie.mov>. You DO need to include extension."
@@ -181,54 +185,71 @@ conda() {
 }
 
 # Function to manage proxy settings
-proxy() {
-	if [ $# -eq 0 ]; then
-        echo "Usage: proxy <set|unset|test> [port]"
-        return 1
-    fi
-	local hostip localip
-	hostip=$(ip route show | grep -i default | awk '{ print $3}')
-	localip=$(hostname -I | awk '{print $1}')
-	local default_port=4780
-	local port=${2:-$default_port}
-	local PROXY_HTTP="http://${hostip}:${port}"
+function proxy() {
+	case "$1" in
+	on)
+		if [ -n "$2" ]; then
+			# Set system proxy
+			export HTTP_PROXY="http://$2:$3"
+			export HTTPS_PROXY="http://$2:$3"
+			echo "System Proxy enabled: $2:$3"
 
-	set_proxy() {
-		export http_proxy="${PROXY_HTTP}"
-		export HTTP_PROXY="${PROXY_HTTP}"
-		export https_proxy="${PROXY_HTTP}"
-		export HTTPS_PROXY="${PROXY_HTTP}"
-		git config --global http.proxy "${PROXY_HTTP}"
-		git config --global https.proxy "${PROXY_HTTP}"
-
-		test_setting
-	}
-
-	unset_proxy() {
-		unset http_proxy
+			# Set Git proxy
+			git config --global http.proxy "http://$2:$3"
+			git config --global https.proxy "http://$2:$3"
+			echo "Git Proxy enabled: $2:$3"
+		else
+			echo "Usage: proxy on <host_ip> <port>"
+		fi
+		;;
+	off)
+		# Unset system proxy
 		unset HTTP_PROXY
-		unset https_proxy
 		unset HTTPS_PROXY
+		echo "System Proxy disabled"
+
+		# Unset Git proxy
 		git config --global --unset http.proxy
 		git config --global --unset https.proxy
+		echo "Git Proxy disabled"
+		;;
+	status)
+		# System proxy status
+		if [ -n "$HTTP_PROXY" ]; then
+			echo "HTTP System Proxy is set to $HTTP_PROXY"
+		else
+			echo "HTTP System Proxy is not set"
+		fi
+		if [ -n "$HTTPS_PROXY" ]; then
+			echo "HTTPS System Proxy is set to $HTTPS_PROXY"
+		else
+			echo "HTTPS System Proxy is not set"
+		fi
 
-		test_setting
-	}
-
-	test_setting() {
-		echo "Host ip: . . . . . . . ${hostip}"
-		echo "Local ip:. . . . . . . ${localip}"
-		echo "Current proxy: . . . . ${https_proxy}"
-	}
-
-	case "$1" in
-		set)
-			set_proxy ;;
-		unset)
-			unset_proxy ;;
-		test)
-			test_setting ;;
-		*)
-			echo "Unsupported arguments. Usage: proxy <set|unset|test> [port]" ;;
+		# Git proxy status
+		git_http_proxy=$(git config --global http.proxy)
+		git_https_proxy=$(git config --global https.proxy)
+		if [ -n "$git_http_proxy" ]; then
+			echo "Git HTTP Proxy is set to $git_http_proxy"
+		else
+			echo "Git HTTP Proxy is not set"
+		fi
+		if [ -n "$git_https_proxy" ]; then
+			echo "Git HTTPS Proxy is set to $git_https_proxy"
+		else
+			echo "Git HTTPS Proxy is not set"
+		fi
+		;;
+	*)
+		echo "Usage: proxy on|off|status [host_ip] [port]"
+		;;
 	esac
+}
+
+function gateway_ip() {
+	ip route show | grep -i default | awk '{print $3}'
+}
+
+function local_ip() {
+	hostname -I | awk '{print $1}'
 }

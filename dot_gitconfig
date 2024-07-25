@@ -11,3 +11,7 @@
 	excludesfile = ~/.gitignore
 [init]
 	defaultBranch = main
+[http]
+	proxy = http://172.18.224.1:4780
+[https]
+	proxy = http://172.18.224.1:4780
