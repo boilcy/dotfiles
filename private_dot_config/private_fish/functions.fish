@@ -1,6 +1,6 @@
 # Operation and maintenance
 function killf
-    if ps -ef | sed 1d | fzf -m | awk '{print $2}' >$TMPDIR/fzf.result
+    if ps -ef | sed 1d | fzf -m | awk '{print $2}' >/tmp/fzf.result
         kill -9 (cat $TMPDIR/fzf.result)
     end
 end
@@ -20,6 +20,25 @@ function md --wraps mkdir -d "Create a directory and cd into it"
         end
     end
 end
+
+function whichlink -d "Usage: whichlink <command>"
+    set cmd_path (type -p greadlink readlink | head -n 1)
+    $cmd_path -f (which $argv)
+end
+
+function log -d "Usage: log"
+    git log --graph --color=always \
+        --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" $argv |
+        fzf --ansi --no-sort --reverse --tiebreak=index --toggle-sort='`' \
+            --bind 'ctrl-m:execute: 
+                echo "{}" | grep -o "[a-f0-9]\{7\}" | head -n 1 | 
+                xargs -I % sh -c "git show --color=always % | less -R"'
+end
+
+function cp_p -d "Usage: cp_p <source> <destination>"
+    rsync -WavP --human-readable --progress $argv[1] $argv[2]
+end
+
 
 function sudo!!
     eval sudo $history[1]
@@ -137,7 +156,7 @@ function gemi -d 'using https://github.com/simonw/llm-gemini'
     end
 end
 
-function openai -d 
+function openai
     # using llm. same dealio as above
     if test -z "$argv[1]"
         llm chat --continue -m gpt-4o

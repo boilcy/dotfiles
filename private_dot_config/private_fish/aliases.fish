@@ -26,6 +26,10 @@ function local_ip
 end
 
 ## abbreviations
+abbr ls 'ls --color=auto'
+abbr ll 'ls -alF'
+abbr la 'ls -A'
+
 abbr mv 'mv -v'
 abbr rm 'rm -v'
 abbr cp 'cp -v'
@@ -36,6 +40,8 @@ abbr cp 'cp -v'
 alias ag='command ag -W (math $COLUMNS - 14)'
 
 # for counting instances.. `ag -o 'metadata","name":".*?"' trace.json | sorteduniq`
+alias hosts='sudo $EDITOR /etc/hosts'
+
 alias sorteduniq="sort | uniq -c | sort --reverse --ignore-leading-blanks --numeric-sort" # -rbn
 alias sorteduniq-asc="sort | uniq -c | sort --ignore-leading-blanks --numeric-sort" # -bn
 

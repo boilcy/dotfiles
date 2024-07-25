@@ -8,19 +8,14 @@ alias l='ls -CF'
 
 # mv, rm, cp
 alias mv='mv -v'
-alias rm='rm -i -v'
+alias rm='rm -v'
 alias cp='cp -v'
 
-alias chmox='chmod -x'
 alias hosts='sudo $EDITOR /etc/hosts'
 
 # Recursively delete `.DS_Store` files
-alias cleanup_dsstore="find . -name '*.DS_Store' -type f -ls -delete"
 alias diskspace_report="df -P -kHl"
-alias free_diskspace_report="diskspace_report"
 
 # File size
 alias fs="stat -f \"%z bytes\""
-
-### config git
-alias config='git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+alias ungz="gunzip -k"

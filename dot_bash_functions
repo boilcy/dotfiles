@@ -1,21 +1,16 @@
 #!/bin/bash
 
+killf() {
+	echo "Usage: killf"
+}
+
+list_paths() {
+	echo "Usage: list_paths"
+}
 # Create a new directory and enter it
 md() {
 	echo "Usage: md <directory_name>"
-	mkdir -p "$@" && cd "$@"
-}
-
-# Find shorthand
-f() {
-	echo "Usage: f <filename>"
-	find . -name "$1" 2>&1 | grep -v 'Permission denied'
-}
-
-# cd into whatever is the forefront Finder window
-cdf() {
-	echo "Usage: cdf"
-	cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')" || exit
+	mkdir -p "$@" && cd "$@" || exit
 }
 
 # Use `which` along with symlink resolving
@@ -35,20 +30,10 @@ log() {
 			xargs -I % sh -c 'git show --color=always % | less -R'"
 }
 
-# Make two beeps
-beep() {
-	echo "Usage: beep"
-	echo -e '\a'
-	sleep 0.1
-	echo -e '\a'
-}
-
-# Start an HTTP server from a directory, optionally specifying the port
 server() {
 	echo "Usage: server [port]"
 	local port="${1:-8011}"
-	open "http://localhost:${port}/" &
-	statikk --port "$port" .
+	python -m http.server "$port"
 }
 
 # Copy with progress
@@ -57,24 +42,15 @@ cp_p() {
 	rsync -WavP --human-readable --progress $1 $2
 }
 
-# Get gzipped size
-gz() {
-	echo "Usage: gz <file>"
-	echo "orig size    (bytes): "
-	cat "$1" | wc -c
-	echo "gzipped size (bytes): "
-	gzip -c "$1" | wc -c
-}
-
 # Whois a domain or a URL
 whois() {
 	echo "Usage: whois <domain_or_url>"
 	local domain=$(echo "$1" | awk -F/ '{print $3}') # get domain from URL
-	if [ -z $domain ]; then
+	if [ -z "$domain" ]; then
 		domain=$1
 	fi
 	echo "Getting whois record for: $domain …"
-	/usr/bin/whois -h whois.internic.net $domain | sed '/NOTICE:/q'
+	/usr/bin/whois -h whois.internic.net "$domain" | sed '/NOTICE:/q'
 }
 
 # Preview CSV files
@@ -252,4 +228,74 @@ function gateway_ip() {
 
 function local_ip() {
 	hostname -I | awk '{print $1}'
+}
+
+dockal() {
+	# Check if correct number of arguments is passed
+	if [ $# -eq 0 ]; then
+		echo "Usage:  dockal COMMAND"
+		echo "Common Commands:"
+		echo "  images       List private docker registry images"
+		echo "  info         Display private docker registry information"
+		echo "  push         Download an image from local registry & tag & untag origin"
+		echo "  pull         Tag & upload an image to a registry & untag"
+		echo "  setrepo      Set private docker registry(ip and port) & add to insecure registry"
+		return 1
+	fi
+
+	# Set default registry
+	registry=${DOCKER_PRIVATE_REGISTRY:-"172.16.23.60:5000"}
+
+	case "$1" in
+	images)
+		echo "Listing images in private docker registry..."
+		curl -X GET "http://$registry/v2/_catalog" | jq '.repositories[]'
+		;;
+	info)
+		echo "Displaying private docker registry information..."
+		curl -X GET "http://$registry/v2/"
+		;;
+	push)
+		if [ $# -lt 2 ]; then
+			echo "Usage: dockal push IMAGE"
+			return 1
+		fi
+		image=$2
+		echo "Pulling image $image from local registry..."
+		docker pull $image
+		echo "Tagging image $image..."
+		docker tag $image $registry/$image
+		echo "Pushing image to private registry..."
+		docker push $registry/$image
+		echo "Untagging original image $image..."
+		docker rmi $registry/$image
+		;;
+	pull)
+		if [ $# -lt 2 ]; then
+			echo "Usage: dockal pull IMAGE"
+			return 1
+		fi
+		image=$2
+		echo "Pulling image $image from private registry..."
+		docker pull $registry/$image
+		echo "Tagging image $image..."
+		docker tag $registry/$image $image
+		echo "Untagging private registry image $image..."
+		docker rmi $registry/$image
+		;;
+	setrepo)
+		if [ $# -lt 2 ]; then
+			echo "Usage: dockal setrepo REPO"
+			return 1
+		fi
+		repo=$2
+		echo "Setting private docker registry to $repo..."
+		export DOCKER_PRIVATE_REGISTRY=$repo
+		echo "Adding $repo to insecure registries..."
+		export DOCKER_OPTS="${DOCKER_OPTS} --insecure-registry $repo"
+		;;
+	*)
+		echo "Unsupported arguments."
+		;;
+	esac
 }
