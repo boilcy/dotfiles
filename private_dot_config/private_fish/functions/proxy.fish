@@ -3,6 +3,8 @@ function proxy
         case 'on'
             if set -q argv[2]
                 # Set system proxy
+                set -gx http_proxy "http://$argv[2]:$argv[3]"
+                set -gx https_proxy "http://$argv[2]:$argv[3]"
                 set -gx HTTP_PROXY "http://$argv[2]:$argv[3]"
                 set -gx HTTPS_PROXY "http://$argv[2]:$argv[3]"
                 echo "System Proxy enabled: $argv[2]:$argv[3]"
@@ -17,6 +19,8 @@ function proxy
 
         case 'off'
             # Unset system proxy
+            set -e http_proxy
+            set -e https_proxy
             set -e HTTP_PROXY
             set -e HTTPS_PROXY
             echo "System Proxy disabled"

@@ -166,6 +166,8 @@ function proxy() {
 	on)
 		if [ -n "$2" ]; then
 			# Set system proxy
+			export http_proxy="http://$2:$3"
+			export https_proxy="http://$2:$3"
 			export HTTP_PROXY="http://$2:$3"
 			export HTTPS_PROXY="http://$2:$3"
 			echo "System Proxy enabled: $2:$3"
@@ -180,6 +182,8 @@ function proxy() {
 		;;
 	off)
 		# Unset system proxy
+		unset http_proxy
+		unset https_proxy
 		unset HTTP_PROXY
 		unset HTTPS_PROXY
 		echo "System Proxy disabled"
