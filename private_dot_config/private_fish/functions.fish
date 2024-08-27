@@ -121,46 +121,73 @@ function extract
     end
 end
 
-# Audio and video processing
-function stabilize --description "stabilize a video"
-    set -l vid $argv[1]
-    ffmpeg -i "$vid" -vf vidstabdetect=stepsize=32:result="$vid.trf" -f null -
-    ffmpeg -i "$vid" -b:v 5700K -vf vidstabtransform=interpol=bicubic:input="$vid.trf" "$vid.mkv"
-    # :optzoom=2 seems nice in theory but i dont love it. kinda want a combo of 1 and 2. (dont zoom in past the static zoom level, but adaptively zoom out to full when possible)
-    ffmpeg -i "$vid" -i "$vid.mkv" -b:v 3000K -filter_complex hstack "$vid.stack.mkv"
-    # vid=Dalton1990/Paultakingusaroundthehouseagai ffmpeg -i "$vid.mp4" -i "$vid.mkv" -b:v 3000K -filter_complex hstack $HOME/Movies/"Paultakingusaroundthehouseagai.stack.mkv"
-    command rm $vid.trf
-end
+function folderwc --description "Count lines and files in a directory for specific file types"
+    # Check if a directory and file suffixes are provided as arguments
+    if test (count $argv) -lt 2
+        echo "Usage: folderwc <directory_path> <file_suffix1> [<file_suffix2> ...]"
+        echo "Example: folderwc /path/to/directory py sh cpp"
+        return 1
+    end
 
+    # Store the directory path
+    set dir_path $argv[1]
+    set --erase argv[1]
+
+    # Store the file suffixes
+    set file_suffixes $argv
+
+    # Check if the provided path is a directory
+    if not test -d $dir_path
+        echo "The provided path is not a directory."
+        return 1
+    end
+
+    set total_lines 0
+    set total_files 0
+
+    # Process each file suffix
+    for suffix in $file_suffixes
+        # Count lines in all files with the specified suffix recursively
+        set suffix_lines (find $dir_path -name "*.$suffix" -type f -print0 | xargs -0 cat | wc -l)
+        set total_lines (math $total_lines + $suffix_lines)
+
+        # Count the number of files with the specified suffix
+        set suffix_count (find $dir_path -name "*.$suffix" -type f | wc -l)
+        set total_files (math $total_files + $suffix_count)
+
+        # Print the results for each suffix
+        echo "Total number of lines in *.$suffix files: $suffix_lines"
+        echo "Total number of *.$suffix files: $suffix_count"
+
+        # Calculate and print the average lines per file for each suffix
+        if test $suffix_count -ne 0
+            set average (math --scale=2 "$suffix_lines / $suffix_count")
+            echo "Average lines per *.$suffix file: $average"
+        else
+            echo "No *.$suffix files found in the directory."
+        end
+        echo ""
+    end
+
+    # Print the overall results only if there are multiple file suffixes
+    if test (count $file_suffixes) -gt 1
+        echo "Overall statistics:"
+        echo "Total number of lines in all specified file types: $total_lines"
+        echo "Total number of files of all specified types: $total_files"
+
+        # Calculate and print the overall average lines per file
+        if test $total_files -ne 0
+            set overall_average (math --scale=2 "$total_lines / $total_files")
+            echo "Overall average lines per file: $overall_average"
+        else
+            echo "No files of the specified types found in the directory."
+        end
+    end
+end
 
 # Environment 
 function conda -d 'lazy initialize conda'
     functions --erase conda
-    eval /opt/miniconda3/bin/conda "shell.fish" hook | source
-    # There's some opportunity to use `psub` but I don't really understand it.
+    eval ~/miniconda3/bin/conda "shell.fish" hook | source
     conda $argv
-end
-
-
-function gemi -d 'using https://github.com/simonw/llm-gemini'
-    # using https://github.com/simonw/llm-gemini and llm
-    # no args? chat.  otherwise use prompt, and allow unquoted stuff to work too
-    #    gemi
-    #    gemi tell me a joke      
-    #    gemi "tell me a joke"
-    if test -z "$argv[1]"
-        # no markdown parsing here without some real fancy stuff. because you dont want to send to markdown renderer (glow) inbetween backticks, etc.
-        llm chat --continue -m gemini-1.5-pro-latest
-    else
-        llm prompt -m gemini-1.5-pro-latest "$argv" && echo "⬇️… and now rendered…⬇️" && llm logs -r | glow
-    end
-end
-
-function openai
-    # using llm. same dealio as above
-    if test -z "$argv[1]"
-        llm chat --continue -m gpt-4o
-    else
-        llm prompt -m gpt-4o "$argv" && echo "⬇️… and now rendered…⬇️" && llm logs -r | glow
-    end
 end

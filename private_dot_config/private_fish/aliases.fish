@@ -26,10 +26,6 @@ function local_ip
 end
 
 ## abbreviations
-abbr ls 'ls --color=auto'
-abbr ll 'ls -alF'
-abbr la 'ls -A'
-
 abbr mv 'mv -v'
 abbr rm 'rm -v'
 abbr cp 'cp -v'

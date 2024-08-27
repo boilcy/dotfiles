@@ -61,3 +61,11 @@ function proxy
             echo "Usage: proxy on|off|status [host_ip] [port]"
     end
 end
+
+function gateway_ip
+  ip route show | grep -i default | awk '{print $3}'
+end
+
+function local_ip
+  hostname -I | awk '{print $1}'
+end

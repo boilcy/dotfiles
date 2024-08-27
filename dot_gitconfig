@@ -12,6 +12,6 @@
 [init]
 	defaultBranch = main
 [http]
-	proxy = http://172.18.224.1:4780
+	proxy = http://172.16.25.30:7890
 [https]
-	proxy = http://172.18.224.1:4780
+	proxy = http://172.16.25.30:7890
