@@ -1,3 +1,7 @@
+function __tabby_working_directory_reporting --on-event fish_prompt
+    echo -en "\e]1337;CurrentDir=$PWD\x7"
+end
+
 # Operation and maintenance
 function killf
     if ps -ef | sed 1d | fzf -m | awk '{print $2}' >/tmp/fzf.result

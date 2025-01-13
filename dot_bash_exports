@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 # file is shared between bash and fish
 
 # vim as default
@@ -54,3 +54,4 @@ export FZF_DEFAULT_COMMAND='fd'
 export FZF_CTRL_T_COMMAND='fd'
 export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always {} 2>/dev/null || tree -C {}'"
 
+export PS1="$PS1\[\e]1337;CurrentDir="'$(pwd)\a\]'

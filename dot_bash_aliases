@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 # some more ls aliases
 alias ls='ls --color=auto'

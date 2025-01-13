@@ -11,7 +11,8 @@
 	excludesfile = ~/.gitignore
 [init]
 	defaultBranch = main
-[http]
-	proxy = http://172.16.25.30:7890
-[https]
-	proxy = http://172.16.25.30:7890
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
