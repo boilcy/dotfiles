@@ -1,12 +1,6 @@
 [user]
 	email = 0x6c6379@gmail.com
 	name = boilcy
-[alias]
-	amend = commit --amend --all --no-edit
-	c = commit -am
-	df = diff --color --color-words --abbrev
-	s = status
-	undocommit = reset HEAD~
 [core]
 	excludesfile = ~/.gitignore
 [init]
