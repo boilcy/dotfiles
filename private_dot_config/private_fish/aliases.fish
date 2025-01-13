@@ -36,6 +36,7 @@ abbr cp 'cp -v'
 alias ag='command ag -W (math $COLUMNS - 14)'
 
 # for counting instances.. `ag -o 'metadata","name":".*?"' trace.json | sorteduniq`
+
 alias hosts='sudo $EDITOR /etc/hosts'
 
 alias sorteduniq="sort | uniq -c | sort --reverse --ignore-leading-blanks --numeric-sort" # -rbn
@@ -49,7 +50,6 @@ alias fs="stat -f \"%z bytes\""
 alias ungz="gunzip -k"
 
 # Networking. IP address, dig, DNS
-alias wget="curl -O"
 
 # Subcommand expansion with `abbr`
 function subcommand_abbr
@@ -81,7 +81,6 @@ subcommand_abbr git c "commit -am"
 subcommand_abbr git tc "commit -am"
 subcommand_abbr git cm "commit --no-all -m"
 subcommand_abbr git co checkout
-subcommand_abbr git c "commit -am"
 subcommand_abbr git s status
 subcommand_abbr git ts status
 subcommand_abbr git amend "commit --amend --all --no-edit"
