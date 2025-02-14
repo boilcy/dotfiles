@@ -46,8 +46,8 @@ alias sorteduniq-asc="sort | uniq -c | sort --ignore-leading-blanks --numeric-so
 alias diskspace_report="df -P -kHl"
 
 # File size
-alias fs="stat -f \"%z bytes\""
-alias ungz="gunzip -k"
+# alias fs="stat -f -c '%z bytes'"
+alias fs="stat -f"
 
 # Networking. IP address, dig, DNS
 
@@ -76,21 +76,23 @@ function subcommand_abbr
     eval "$abbr_temp_fn"
 end
 
-# git subcommand
-subcommand_abbr git c "commit -am"
-subcommand_abbr git tc "commit -am"
-subcommand_abbr git cm "commit --no-all -m"
-subcommand_abbr git co checkout
-subcommand_abbr git s status
-subcommand_abbr git ts status
-subcommand_abbr git amend "commit --amend --all --no-edit"
-subcommand_abbr git hreset "reset --hard"
-subcommand_abbr git cp cherry-pick
-subcommand_abbr git cherrypick cherry-pick
-subcommand_abbr git dif diff
+# git subcommands
+subcommand_abbr git ac "commit -am"  # add & commit
+subcommand_abbr git mc "commit -m"   # message commit
+subcommand_abbr git co checkout     # checkout
+subcommand_abbr git st status        # status
+subcommand_abbr git am "commit --amend --all --no-edit"  # amend
+subcommand_abbr git hr "reset --hard"  # hard reset
+subcommand_abbr git cp cherry-pick   # cherry pick
+subcommand_abbr git df diff          # diff
 
 subcommand_abbr git db diffbranch
 subcommand_abbr git dbt diffbranch-that
+
+# useful combinations
+subcommand_abbr git cob "checkout -b"  # checkout new branch
+subcommand_abbr git lga "log --all --graph --decorate"  # log all branches graphically
+subcommand_abbr git dfc "diff --cached"  # diff staged changes
 
 # can only do one of these unless I adopt lucas's setup.
 subcommand_abbr npm i install

@@ -1,4 +1,7 @@
-function proxy
+function proxy -d "Convenient command line proxy environment variable management"
+    argparse 'help' 'h/host=' 'p/port=' -- $argv
+    or return
+
     switch $argv[1]
         case 'on'
             if set -q argv[2]

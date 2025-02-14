@@ -1,19 +1,20 @@
+# tabby prompt
 function __tabby_working_directory_reporting --on-event fish_prompt
     echo -en "\e]1337;CurrentDir=$PWD\x7"
 end
 
-# Operation and maintenance
-function killf
-    if ps -ef | sed 1d | fzf -m | awk '{print $2}' >/tmp/fzf.result
-        kill -9 (cat $TMPDIR/fzf.result)
-    end
+# git related
+function log -d "Usage: log"
+    git log --graph --color=always \
+        --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" $argv |
+        fzf --ansi --no-sort --reverse --tiebreak=index --toggle-sort='`' \
+            --bind 'ctrl-m:execute: 
+                echo "{}" | grep -o "[a-f0-9]\{7\}" | head -n 1 | 
+                xargs -I % sh -c "git show --color=always % | less -R"'
 end
 
-function list_paths --description "list paths, in order"
-    printf '%s\n' (string split \n $PATH)
-end
-
-function md --wraps mkdir -d "Create a directory and cd into it"
+# System Admin
+function mkcd --wraps mkdir -d "Create a directory and enter it"
     command mkdir -p $argv
     if test $status = 0
         switch $argv[(count $argv)]
@@ -25,103 +26,21 @@ function md --wraps mkdir -d "Create a directory and cd into it"
     end
 end
 
-function whichlink -d "Usage: whichlink <command>"
-    set cmd_path (type -p greadlink readlink | head -n 1)
-    $cmd_path -f (which $argv)
-end
-
-function log -d "Usage: log"
-    git log --graph --color=always \
-        --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" $argv |
-        fzf --ansi --no-sort --reverse --tiebreak=index --toggle-sort='`' \
-            --bind 'ctrl-m:execute: 
-                echo "{}" | grep -o "[a-f0-9]\{7\}" | head -n 1 | 
-                xargs -I % sh -c "git show --color=always % | less -R"'
-end
-
-function cp_p -d "Usage: cp_p <source> <destination>"
-    rsync -WavP --human-readable --progress $argv[1] $argv[2]
-end
-
-
-function sudo!!
-    eval sudo $history[1]
-end
-
-# `shellswitch [bash|zsh|fish]`
-function shellswitch
-    chsh -s /usr/bin/$argv
-end
-
-function fuck -d 'Correct your previous console command'
-    set -l exit_code $status
-    set -l eval_script (mktemp 2>/dev/null ; or mktemp -t 'thefuck')
-    set -l fucked_up_commandd $history[1]
-    thefuck $fucked_up_commandd >$eval_script
-    . $eval_script
-    rm $eval_script
-    if test $exit_code -ne 0
-        history --delete $fucked_up_commandd
+function killf -d "Kill processes interactively via fzf"
+    if ps -ef | sed 1d | fzf -m | awk '{print $2}' >/tmp/fzf.result
+        kill -9 (cat $TMPDIR/fzf.result)
     end
 end
 
-function server -d 'Start a HTTP server in the current dir, optionally specifying the port'
-    # arg can either be port number or extra args to statikk
-    if test $argv[1]
-        if string match -qr '^-?[0-9]+(\.?[0-9]*)?$' -- "$argv[1]"
-            set -l port $argv[1]
-            python -m http.server $port
-        else
-            echo "wrong port"
-        end
+function fp -d "Find process by name with highlight"
+    ps aux | grep -i $argv | grep -v grep
+end
 
+function sudo!! -d "Re-run last command with sudo"
+    if test -n "$history[1]"
+        eval sudo $history[1]
     else
-        python -m http.server
-    end
-end
-
-
-# Extract archives
-function extract
-    echo "Usage: extract <file>"
-    if not test -f $argv[1]
-        echo "'$argv[1]' is not a valid file"
-        return 1
-    end
-
-    set filename (basename $argv[1])
-    set foldername (string split "." $filename)[1]
-    set fullpath (perl -e 'use Cwd "abs_path";print abs_path(@ARGV[0])' $argv[1])
-    set didfolderexist false
-
-    if test -d $foldername
-        set didfolderexist true
-        read -P "$foldername already exists, do you want to overwrite it? (y/n) " -n 1
-        echo
-        if string match -rq '^[Nn]' $argv
-            return 1
-        end
-    end
-
-    mkdir -p $foldername; and cd $foldername
-    switch $argv[1]
-        case '*.tar.bz2' '*.tb2' '*.tbz' '*.tbz2'
-            tar xjf $fullpath
-        case '*.tar.gz' '*.tgz' '*.tar.Z' '*.taz'
-            tar xzf $fullpath
-        case '*.tar.xz' '*.txz'
-            tar Jxvf $fullpath
-        case '*.tar'
-            tar xf $fullpath
-        case '*.zip'
-            unzip $fullpath
-        case '*'
-            echo "'$argv[1]' cannot be extracted via extract()"
-            cd ..
-            if test $didfolderexist = false
-                rm -r $foldername
-            end
-            return 1
+        echo "No command history found"
     end
 end
 
@@ -189,7 +108,74 @@ function folderwc --description "Count lines and files in a directory for specif
     end
 end
 
-# Environment 
+# Network
+function myip -d "Get external IP address"
+    curl -s https://ipinfo.io/ip
+    # 备选方案: dig +short myip.opendns.com @resolver1.opendns.com
+end
+
+function portscan -d "Check port availability"
+    nc -zv $argv[1] $argv[2] 2>&1 | grep --color=auto succeeded
+end
+
+function pyhttp -d "Quick Python HTTP server"
+    argparse 'p/port=' -- $argv
+    set -q _flag_port; or set _flag_port 8000
+    python -m http.server $_flag_port
+end
+
+# Dev related
+function list_paths --description "list paths, in order"
+    printf '%s\n' (string split \n $PATH)
+end
+
+function whichlink -d "Usage: whichlink <command>"
+    set cmd_path (type -p greadlink readlink | head -n 1)
+    $cmd_path -f (which $argv)
+end
+
+function now -d "Get timestamp in different formats"
+    argparse 's/short' 'f/full' -- $argv
+    if set -q _flag_short
+        date +"%Y%m%d_%H%M%S"
+    else if set -q _flag_full
+        date +"%Y-%m-%d %H:%M:%S %Z"
+    else
+        date +%s
+    end
+end
+
+function envtemp -d "Create temporary environment"
+    set -l old_env (set | grep -vE '^_|fish_')
+    fish --command "env > .temp_env"
+    and source .temp_env
+    rm .temp_env
+    echo "Original environment restored"
+end
+
+# Common utils
+function hf -d "Search history with fzf"
+    history | fzf --height=40% --reverse | read -l cmd
+    and commandline -rb $cmd
+end
+
+function cp_p -d "Usage: cp_p <source> <destination>"
+    rsync -WavP --human-readable --progress $argv[1] $argv[2]
+end
+
+function fuck -d 'Correct your previous console command'
+    set -l exit_code $status
+    set -l eval_script (mktemp 2>/dev/null ; or mktemp -t 'thefuck')
+    set -l fucked_up_commandd $history[1]
+    thefuck $fucked_up_commandd >$eval_script
+    . $eval_script
+    rm $eval_script
+    if test $exit_code -ne 0
+        history --delete $fucked_up_commandd
+    end
+end
+
+# Conda
 function conda -d 'lazy initialize conda'
     functions --erase conda
     eval ~/miniconda3/bin/conda "shell.fish" hook | source

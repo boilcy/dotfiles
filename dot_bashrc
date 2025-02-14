@@ -1,5 +1,16 @@
 #!/usr/bin/bash
 
+# If not running interactively, don't do anything and return early
+[[ $- == *i* ]] || return  
+
 [[ -n ""$PS1 ]] && source $HOME/.bash_profile
 [ -f ~/.fzf.bash ] && source $HOME/.fzf.bash
 . "$HOME/.cargo/env"
+
+if command -v starship > /dev/null 2>&1; then
+    eval "$(starship init bash)"
+else
+    echo "Starship prompt not found. Install it with:"
+    echo "  curl -sS https://starship.rs/install.sh | sh"
+    echo "Or visit https://starship.rs for more installation options."
+fi
